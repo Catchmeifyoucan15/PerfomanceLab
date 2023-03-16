@@ -1,0 +1,137 @@
+static string[] CardType = new string[] { "R", "G", "B", "W" };
+
+        static int[] Nominal = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+
+        [DebuggerDisplay("{Info}")]
+        class Card
+        {
+            public string Ct { get; private set; }
+
+            public int N { get; private set; }
+
+            public Card(string ct, int cn)
+            {
+                Ct = ct;
+                N = cn;
+            }
+
+            public string Info
+            {
+                get
+                {
+                    return Ct + N;
+                }
+            }
+        }
+
+        class Player
+        {
+            public Card[] Cards { get; private set; }
+            public Player(Card[] cards)
+            {
+                Cards = cards;
+            }
+        }
+        public static T[] Shuffle<T>(T[] array)
+        {
+            var arraycop = array.ToArray();
+            var rng = new Random();
+            int n = arraycop.Length;
+            while (n > 1)
+            {
+                int k = rng.Next(n--);
+                T temp = arraycop[n];
+                arraycop[n] = arraycop[k];
+                arraycop[k] = temp;
+            }
+            return arraycop;
+        }
+
+
+        static void Main(string[] args)
+        {
+            List<Card> Deck = new List<Card>();
+
+            List<Player> Player = new List<Player>();
+
+            foreach (var ct in CardType)
+            {
+                foreach (var nom in Nominal)
+                {
+                    Deck.Add(new Card(ct, nom));
+                }
+            }
+            Deck = Shuffle<Card>(Deck.ToArray()).ToList();
+
+            bool exit = false;
+            while (!exit)
+            {
+                Console.Write("Enter command:");
+                string command = Console.ReadLine();
+
+                string[] arg = command.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (arg.Length == 1 && arg[0].Equals("exit", StringComparison.OrdinalIgnoreCase))
+                {
+                    exit = true;
+                    break;
+                }
+                else if (arg[0].Equals("start"))
+                {
+                    if (!int.TryParse(arg[1], out int N))
+                    {
+                        Console.WriteLine("Некорректное количество игроков");
+                        break;
+                    }
+                    if (!int.TryParse(arg[2], out int C))
+                    {
+                        Console.WriteLine("Некорректное количество карт");
+                        break;
+                    }
+
+                    var DeckCopy = Deck.ToList();
+                    Random rnd = new Random();
+                    for (int i = 0; i < C; i++)
+                    {
+                        if (DeckCopy.Count == 0)
+                        {
+                            Console.WriteLine("Не хватило карт");
+                            Player.Clear();
+                            break;
+                        }
+                        List<Card> pcards = new List<Card>();
+                        for (int c = 0; c < N; c++)
+                        {
+                            if (DeckCopy.Count == 0)
+                            {
+                                break;
+                            }
+                            var crd = DeckCopy[rnd.Next(DeckCopy.Count)];
+                            DeckCopy.Remove(crd);
+                            pcards.Add(crd);
+                        }
+
+                        Player pl = new Player(pcards.ToArray());
+                        Player.Add(pl);
+                    }
+                }
+                else if (arg[0].Equals("get-cards") && int.TryParse(arg[1], out int tN))
+                {
+                    tN--;
+                    if (tN < 0 || tN >= Player.Count)
+                    {
+                        Console.WriteLine("Неверный номер игрока");
+                        continue;
+                    }
+
+                    string info = (tN + 1) + " " + Player[tN].Cards.Aggregate("", (a, b) => a += b.Info + " ");
+                    Console.WriteLine(info);
+                }
+                else
+                {
+                    Console.WriteLine("Неверная команда");
+                }
+            }
+
+        }
